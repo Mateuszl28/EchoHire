@@ -10,11 +10,13 @@ import {
   GitCompareArrows,
   Sparkles,
   PlusCircle,
+  Kanban,
 } from "lucide-react";
 
 const NAV = [
   { href: "/",           label: "Dashboard",   icon: LayoutDashboard, match: (p: string) => p === "/" },
   { href: "/candidates", label: "Candidates",  icon: Users,           match: (p: string) => p.startsWith("/candidates") },
+  { href: "/pipeline",   label: "Pipeline",    icon: Kanban,          match: (p: string) => p.startsWith("/pipeline") },
   { href: "/jobs",       label: "Jobs",        icon: Briefcase,       match: (p: string) => p.startsWith("/jobs") },
   { href: "/match",      label: "Match",       icon: Sparkles,        match: (p: string) => p.startsWith("/match") },
   { href: "/compare",    label: "Compare",     icon: GitCompareArrows,match: (p: string) => p.startsWith("/compare") },

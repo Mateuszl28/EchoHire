@@ -20,6 +20,61 @@ export interface Candidate {
   scorecard?: Scorecard;
   tags: string[];
   starred?: boolean;
+  notes?: Note[];
+  activity?: ActivityEntry[];
+  interviewKits?: InterviewKit[]; // generated per candidate-job pair
+  draftEmails?: DraftEmail[];
+}
+
+export interface Note {
+  id: string;
+  body: string;           // plain text / markdown
+  author: string;         // e.g. "MC"
+  createdAt: number;
+}
+
+export type ActivityKind =
+  | "created"
+  | "status-changed"
+  | "analyzed"
+  | "matched"
+  | "note-added"
+  | "interview-prepped"
+  | "email-drafted"
+  | "starred"
+  | "unstarred";
+
+export interface ActivityEntry {
+  id: string;
+  kind: ActivityKind;
+  message: string;        // short summary
+  detail?: string;        // optional longer body
+  createdAt: number;
+  meta?: Record<string, string | number>;
+}
+
+export interface InterviewKit {
+  id: string;
+  jobId: string;          // empty if generic
+  jobTitle: string;
+  rubric: string[];       // 4-6 bullet criteria to score on
+  questions: InterviewQuestion[];
+  createdAt: number;
+}
+
+export interface InterviewQuestion {
+  category: "technical" | "behavioral" | "domain" | "leadership" | "verification";
+  question: string;
+  probes: string[];       // follow-up prompts
+  signal: string;         // what a good answer looks like
+}
+
+export interface DraftEmail {
+  id: string;
+  subject: string;
+  body: string;
+  intent: "first-outreach" | "interview-invite" | "rejection-warm" | "offer";
+  createdAt: number;
 }
 
 export interface Scorecard {

@@ -10,6 +10,8 @@ import { Markdown } from "@/components/markdown";
 import { Radar } from "@/components/radar";
 import { useCandidate, useCandidates } from "@/lib/storage";
 import { extractScorecard } from "@/lib/scorecard";
+import { logActivity } from "@/lib/activity";
+import { CandidateTabs } from "@/components/candidate-tabs";
 import {
   STATUS_LABEL,
   STATUS_COLOR,
@@ -146,10 +148,13 @@ export default function CandidateDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Analysis + Scorecard */}
+        {/* Tabs (Analysis · Interview · Notes · Email) + Scorecard */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
-            <AnalysisCard candidate={candidate} />
+            <CandidateTabs
+              candidate={candidate}
+              analysisSlot={<AnalysisCard candidate={candidate} />}
+            />
           </div>
           <div className="space-y-4">
             <ScorecardCard scorecard={scorecard} />
@@ -205,7 +210,14 @@ function AnalysisCard({ candidate }: { candidate: ReturnType<typeof useCandidate
         buf += dec.decode(value, { stream: true });
         setAnalysis(buf);
       }
-      update(candidate.id, { analysis: buf });
+      const updated = logActivity(
+        { ...candidate, analysis: buf },
+        "analyzed",
+        candidate.analysis ? "Re-ran analysis" : "Ran initial analysis",
+        undefined,
+        { length: buf.length }
+      );
+      update(candidate.id, updated);
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         setError((e as Error).message);
@@ -228,75 +240,72 @@ function AnalysisCard({ candidate }: { candidate: ReturnType<typeof useCandidate
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-violet-500" />
-            Claude analysis
-            {mode === "mock" && (
-              <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-300 text-amber-700 bg-amber-50">
-                mock
-              </span>
-            )}
-            {mode === "live" && (
-              <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-emerald-300 text-emerald-700 bg-emerald-50">
-                live
-              </span>
-            )}
-          </span>
-          <div className="flex items-center gap-1.5">
-            {analysis && !loading && (
-              <>
-                <Button variant="ghost" size="sm" onClick={copy} title="Copy markdown">
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={download} title="Download .md">
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            )}
-            {loading ? (
-              <Button variant="outline" size="sm" onClick={stop}>
-                <Square className="h-3 w-3" />
-                Stop
+    <CardContent className="p-4">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+          Claude analysis
+          {mode === "mock" && (
+            <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-300 text-amber-700 bg-amber-50">
+              mock
+            </span>
+          )}
+          {mode === "live" && (
+            <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-emerald-300 text-emerald-700 bg-emerald-50">
+              live
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {analysis && !loading && (
+            <>
+              <Button variant="ghost" size="sm" onClick={copy} title="Copy markdown">
+                <Copy className="h-3.5 w-3.5" />
               </Button>
-            ) : (
-              <Button size="sm" onClick={run}>
-                <Sparkles className="h-3.5 w-3.5" />
-                {analysis ? "Re-analyze" : "Analyze with Claude"}
+              <Button variant="ghost" size="sm" onClick={download} title="Download .md">
+                <Download className="h-3.5 w-3.5" />
               </Button>
-            )}
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <div className="rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-        {!analysis && !loading && !error && (
-          <div className="text-sm text-muted-foreground py-10 text-center">
-            No analysis yet. Click <strong>Analyze with Claude</strong> to generate one.
-          </div>
-        )}
-        {analysis && (
-          <>
-            <Markdown content={analysis} />
-            {loading && <span className="inline-block w-1.5 h-4 bg-foreground/70 animate-pulse ml-1 align-baseline" />}
-          </>
-        )}
-        {loading && !analysis && (
-          <div className="space-y-2 py-2">
-            <div className="h-3 w-1/2 rounded bg-muted animate-pulse" />
-            <div className="h-3 w-3/4 rounded bg-muted animate-pulse" />
-            <div className="h-3 w-2/3 rounded bg-muted animate-pulse" />
-            <div className="h-3 w-5/6 rounded bg-muted animate-pulse" />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </>
+          )}
+          {loading ? (
+            <Button variant="outline" size="sm" onClick={stop}>
+              <Square className="h-3 w-3" />
+              Stop
+            </Button>
+          ) : (
+            <Button size="sm" onClick={run}>
+              <Sparkles className="h-3.5 w-3.5" />
+              {analysis ? "Re-analyze" : "Analyze with Claude"}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+      {!analysis && !loading && !error && (
+        <div className="text-sm text-muted-foreground py-10 text-center">
+          No analysis yet. Click <strong>Analyze with Claude</strong> to generate one.
+        </div>
+      )}
+      {analysis && (
+        <>
+          <Markdown content={analysis} />
+          {loading && <span className="inline-block w-1.5 h-4 bg-foreground/70 animate-pulse ml-1 align-baseline" />}
+        </>
+      )}
+      {loading && !analysis && (
+        <div className="space-y-2 py-2">
+          <div className="h-3 w-1/2 rounded bg-muted animate-pulse" />
+          <div className="h-3 w-3/4 rounded bg-muted animate-pulse" />
+          <div className="h-3 w-2/3 rounded bg-muted animate-pulse" />
+          <div className="h-3 w-5/6 rounded bg-muted animate-pulse" />
+        </div>
+      )}
+    </CardContent>
   );
 }
 
