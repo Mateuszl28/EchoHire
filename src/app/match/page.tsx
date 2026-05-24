@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,14 @@ import {
 } from "lucide-react";
 
 export default function MatchPage() {
+  return (
+    <Suspense fallback={<AppShell><div /></AppShell>}>
+      <MatchInner />
+    </Suspense>
+  );
+}
+
+function MatchInner() {
   const sp = useSearchParams();
   const initialJobId = sp.get("job") ?? "";
 

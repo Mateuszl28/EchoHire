@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,14 @@ import {
 } from "lucide-react";
 
 export default function CandidatesPage() {
+  return (
+    <Suspense fallback={<AppShell><div /></AppShell>}>
+      <CandidatesInner />
+    </Suspense>
+  );
+}
+
+function CandidatesInner() {
   const { list, add, remove, update } = useCandidates();
   const router = useRouter();
   const sp = useSearchParams();
